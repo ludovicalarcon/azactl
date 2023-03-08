@@ -14,7 +14,7 @@ tasks:
   build.win:
     desc: "Build for windows platform"
     cmds:
-      - go build -o {{ .BIN_NAME }}.exe -a -ldflags "-s -w"
+      - go build -o bin/{{ .BIN_NAME }}.exe -a -ldflags "-s -w"
     env:
       GOOS: windows
       GOARCH: amd64
@@ -22,7 +22,7 @@ tasks:
   build:
     desc: "Build for linux platform"
     cmds:
-      - go build -o {{ .BIN_NAME }} -a -ldflags "-s -w"
+      - go build -o bin/{{ .BIN_NAME }} -a -ldflags "-s -w"
     env:
       GOOS: linux
       GOARCH: amd64
@@ -30,7 +30,7 @@ tasks:
   build.mac:
     desc: "Build for macos platform"
     cmds:
-      - go build -o {{ .BIN_NAME }} -a -ldflags "-s -w"
+      - go build -o bin/{{ .BIN_NAME }} -a -ldflags "-s -w"
     env:
       GOOS: darwin
       GOARCH: amd64

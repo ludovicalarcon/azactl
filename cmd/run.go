@@ -29,9 +29,11 @@ var runCmd = &cobra.Command{
 			err = jekyllProfile()
 		case "go":
 			err = goProfile()
+		case "helm":
+			err = helmProfile()
 		default:
 			fmt.Println("Unknown profile! list of profile are:")
-			fmt.Println("jekyll | go")
+			fmt.Println("jekyll | go | helm")
 		}
 
 		if err != nil {
@@ -42,12 +44,33 @@ var runCmd = &cobra.Command{
 	},
 }
 
+func helmProfile() error {
+	const compose = `version: '3.3'
+services:
+  helm:
+    container_name: helm
+    image: azalax/helm
+    volumes:
+      - '$PWD:/home/helm/workspace'
+    tty: true
+    stdin_open: true
+`
+	if err := createComposeFile(composeFileName, compose); err != nil {
+		return err
+	}
+	if err := runComposeFile(Profile); err != nil {
+		return err
+	}
+
+	return cleanComposeFile(composeFileName)
+}
+
 func goProfile() error {
 	const compose = `version: '3.3'
 services:
   go:
     container_name: go
-    image: azalax/golang:1.20
+    image: azalax/golang
     volumes:
       - '$PWD:/home/go/workspace'
     tty: true
