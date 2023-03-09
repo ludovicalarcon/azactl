@@ -5,9 +5,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/signal"
-	"sync"
-	"syscall"
 
 	"github.com/spf13/cobra"
 )
@@ -15,14 +12,24 @@ import (
 const composeFileName = "compose.yaml"
 
 var Profile string
+var Version string
 
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "run a container based environment of the desired profile",
-	Long:  "run a container based environment of the desired profile",
+	Short: "Run a container based environment of the desired profile",
+	Long: `Run a container based environment of the desired profile.
+Available profile:
+- go
+- helm
+- jekyll
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		var err error = nil
+		err := exec.Command("docker", "compose", "version").Run()
+		if err != nil {
+			log.Println("docker compose is not present, please install it first")
+			return err
+		}
 
 		switch Profile {
 		case "jekyll":
@@ -42,88 +49,7 @@ var runCmd = &cobra.Command{
 
 		return err
 	},
-}
-
-func helmProfile() error {
-	const compose = `version: '3.3'
-services:
-  helm:
-    container_name: helm
-    image: azalax/helm
-    volumes:
-      - '$PWD:/home/helm/workspace'
-    tty: true
-    stdin_open: true
-`
-	if err := createComposeFile(composeFileName, compose); err != nil {
-		return err
-	}
-	if err := runComposeFile(Profile); err != nil {
-		return err
-	}
-
-	return cleanComposeFile(composeFileName)
-}
-
-func goProfile() error {
-	const compose = `version: '3.3'
-services:
-  go:
-    container_name: go
-    image: azalax/golang
-    volumes:
-      - '$PWD:/home/go/workspace'
-    tty: true
-    stdin_open: true
-`
-	if err := createComposeFile(composeFileName, compose); err != nil {
-		return err
-	}
-	if err := runComposeFile(Profile); err != nil {
-		return err
-	}
-	return cleanComposeFile(composeFileName)
-}
-
-func jekyllProfile() error {
-	const compose = `version: '3.3'
-services:
-  jekyll:
-    container_name: jekyll
-    image: jekyll/jekyll
-    volumes:
-      - '$PWD:/workspace'
-    ports:
-      - '127.0.0.1:8282:4000/tcp'
-    working_dir: /workspace
-    command: sh -c "bundle install && bundle exec jekyll server --host 0.0.0.0"
-    tty: true
-    stdin_open: true
-`
-	var wg sync.WaitGroup
-	wg.Add(1) // add a goroutine to wait
-
-	// Jekyll server has to be killed with ctrl+c
-	// catch ctrl+c and clean
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		defer wg.Done()
-
-		composeFileDown()
-		cleanComposeFile(composeFileName)
-	}()
-
-	if err := createComposeFile(composeFileName, compose); err != nil {
-		return err
-	}
-	if err := composeFileUp(); err != nil {
-		return err
-	}
-
-	wg.Wait() // wait goroutine to complete
-	return nil
+	SilenceUsage: true,
 }
 
 func createComposeFile(fileName string, content string) error {
@@ -199,6 +125,7 @@ func cleanComposeFile(fileName string) error {
 func init() {
 	rootCmd.AddCommand(runCmd)
 
-	runCmd.Flags().StringVarP(&Profile, "profile", "p", "", "Profile tu use [jekyll/go] (required)")
+	runCmd.Flags().StringVarP(&Profile, "profile", "p", "", "Profile tu use [jekyll/go/helm] (required)")
+	runCmd.Flags().StringVarP(&Version, "version", "v", "", "Image version to use (default latest)")
 	runCmd.MarkFlagRequired("profile")
 }
