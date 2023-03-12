@@ -9,10 +9,11 @@ import (
 )
 
 type ProfileInfo struct {
-	name    string
-	image   string
-	version string
-	home    string
+	name     string
+	image    string
+	version  string
+	home     string
+	bindPort string
 }
 
 func (info *ProfileInfo) init() {
@@ -22,7 +23,7 @@ func (info *ProfileInfo) init() {
 }
 
 func generateComposeFile(info ProfileInfo) string {
-	const compose = `version: '3.3'
+	compose := `version: '3.3'
 services:
   %s:
     container_name: %s
@@ -32,6 +33,14 @@ services:
     tty: true
     stdin_open: true
 `
+	if info.bindPort != "" {
+		compose += `
+    ports:
+      - '%s'
+`
+		return fmt.Sprintf(compose, info.name, info.name, info.image, info.version, info.home, info.bindPort)
+	}
+
 	return fmt.Sprintf(compose, info.name, info.name, info.image, info.version, info.home)
 }
 
@@ -73,20 +82,15 @@ func goProfile() error {
 }
 
 func jekyllProfile() error {
-	const compose = `version: '3.3'
-services:
-  jekyll:
-    container_name: jekyll
-    image: jekyll/jekyll
-    volumes:
-      - '$PWD:/workspace'
-    ports:
-      - '127.0.0.1:8282:4000/tcp'
-    working_dir: /workspace
-    command: sh -c "bundle install && bundle exec jekyll server --host 0.0.0.0"
-    tty: true
-    stdin_open: true
-`
+	info := ProfileInfo{
+		name:     "jekyll",
+		image:    "azalax/jekyll",
+		home:     "/home/jekyll/workspace",
+		bindPort: "127.0.0.1:8282:4000/tcp",
+	}
+	info.init()
+	compose := generateComposeFile(info)
+
 	var wg sync.WaitGroup
 	wg.Add(1) // add a goroutine to wait
 

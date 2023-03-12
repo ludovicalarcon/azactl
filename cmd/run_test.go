@@ -59,8 +59,10 @@ func TestCleanComposeFile_Should_ReturnErrInvalidFileName(t *testing.T) {
 }
 
 func TestRunCmd_Should_ReturnErrDockerNotInstalled(t *testing.T) {
+	path := os.Getenv("PATH")
+	os.Setenv("PATH", "")
 	err := runCmd.RunE(runCmd, []string{})
-
+	os.Setenv("PATH", path)
 	if err == nil {
 		t.Error("It should have return an error as docker is not in PATH")
 	}
