@@ -80,6 +80,7 @@ func composeFileUp() error {
 	// Interractive has to be killed with ctrl+c/ctrl+d
 	if err != nil && err.(*exec.ExitError).ExitCode() != 130 {
 		log.Println("[ERROR] docker compose up:", err)
+		composeFileDown()
 		return err
 	}
 	return nil
