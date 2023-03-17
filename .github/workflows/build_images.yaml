@@ -1,0 +1,58 @@
+name: 'Build Images'
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'Dockerfiles/**'
+  
+  schedule:
+    - cron: '0 1 * * 1'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-image:
+    strategy:
+      matrix:
+        dockerfile:
+          - "Dockerfile_golang"
+          - "Dockerfile_helm"
+          - "Dockerfile_jekyll"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set Tag
+        id: vars
+        run: |
+          echo "docker_tag=$(cat Dockerfiles/version | grep ${{ matrix.dockerfile }} | cut -f 2 -d ":")" >> $GITHUB_OUTPUT
+          echo "docker_image=$(cat Dockerfiles/version | grep ${{ matrix.dockerfile }} | cut -f 1 -d ":" | cut -f 2 -d "_")" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: Dockerfiles
+          file: Dockerfiles/${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            azalax/${{ steps.vars.outputs.docker_image }}:latest
+            azalax/${{ steps.vars.outputs.docker_image }}:${{ steps.vars.outputs.docker_tag }}
+            ghcr.io/ludovicalarcon/${{ steps.vars.outputs.docker_image }}:latest
+            ghcr.io/ludovicalarcon/${{ steps.vars.outputs.docker_image }}:${{ steps.vars.outputs.docker_tag }}
