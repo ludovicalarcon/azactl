@@ -1,0 +1,32 @@
+FROM ubuntu
+
+ENV HELM_VERSION=3.11.2
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    zsh \
+    wget \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -L https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz | tar xz && mv linux-amd64/helm /bin/helm && rm -rf linux-amd64
+
+RUN HELM_DOCS_URL=$(curl -s https://api.github.com/repos/norwoodj/helm-docs/releases/latest | jq -r '.assets[] | select(.name|match("Linux_x86_64.tar.gz$")) | .browser_download_url') \
+    && HELM_DOCS=$(echo "$HELM_DOCS_URL" | cut -d / -f 9) \
+    && wget ${HELM_DOCS_URL} \
+    && tar zxf $HELM_DOCS \
+    && mv helm-docs /usr/bin \
+    && rm $HELM_DOCS
+
+RUN adduser helm
+
+USER helm
+WORKDIR /home/helm/workspace
+
+RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
+
+RUN helm plugin install https://github.com/helm-unittest/helm-unittest
+
+ENTRYPOINT zsh
+

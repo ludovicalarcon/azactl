@@ -11,14 +11,6 @@ tasks:
     cmds:
       - go test ./cmd -coverprofile=covetage.out
 
-  build.win:
-    desc: "Build for windows platform"
-    cmds:
-      - go build -o bin/{{ .BIN_NAME }}.exe -a -ldflags "-s -w"
-    env:
-      GOOS: windows
-      GOARCH: amd64
-
   build:
     desc: "Build for linux platform"
     cmds:
