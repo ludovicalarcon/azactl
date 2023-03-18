@@ -1,0 +1,7 @@
+FROM jekyll/jekyll:4.2.2
+
+WORKDIR /home/jekyll/workspace
+
+EXPOSE 4000
+
+ENTRYPOINT ["sh", "-c", "bundle install && bundle exec jekyll server --host 0.0.0.0"]
