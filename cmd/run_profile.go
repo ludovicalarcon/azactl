@@ -66,7 +66,7 @@ func helmProfile() error {
 func goProfile() error {
 	info := ProfileInfo{
 		name:  "go",
-		image: "azalax/go",
+		image: "azalax/golang",
 		home:  "/home/go/workspace",
 	}
 	info.init()
