@@ -14,11 +14,17 @@ type ProfileInfo struct {
 	version  string
 	home     string
 	bindPort string
+	hostPath string
 }
 
 func (info *ProfileInfo) init() {
+	info.hostPath = "$PWD"
+
 	if Version != "" {
 		info.version = ":" + Version
+	}
+	if HostPath != "" {
+		info.hostPath = HostPath
 	}
 }
 
@@ -29,7 +35,7 @@ services:
     container_name: %s
     image: %s%s
     volumes:
-      - '$PWD:%s'
+      - '%s:%s'
     tty: true
     stdin_open: true
 `
@@ -38,10 +44,10 @@ services:
     ports:
       - '%s'
 `
-		return fmt.Sprintf(compose, info.name, info.name, info.image, info.version, info.home, info.bindPort)
+		return fmt.Sprintf(compose, info.name, info.name, info.image, info.version, info.hostPath, info.home, info.bindPort)
 	}
 
-	return fmt.Sprintf(compose, info.name, info.name, info.image, info.version, info.home)
+	return fmt.Sprintf(compose, info.name, info.name, info.image, info.version, info.hostPath, info.home)
 }
 
 func helmProfile() error {
