@@ -13,6 +13,7 @@ const composeFileName = "compose.yaml"
 
 var Profile string
 var Version string
+var HostPath string
 
 var runCmd = &cobra.Command{
 	Use:   "run",
@@ -128,5 +129,6 @@ func init() {
 
 	runCmd.Flags().StringVarP(&Profile, "profile", "p", "", "Profile tu use [jekyll/go/helm] (required)")
 	runCmd.Flags().StringVarP(&Version, "version", "v", "", "Image version to use (default latest)")
+	runCmd.Flags().StringVarP(&HostPath, "path", "", "", "Host path to mount")
 	runCmd.MarkFlagRequired("profile")
 }
